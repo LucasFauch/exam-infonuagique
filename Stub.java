@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 
@@ -8,15 +9,18 @@ public class Stub implements CalculatriceItf{
     Socket socket;
     OutputStream outputStream;
     InputStream inputStream;
+    ObjectOutputStream objectOutputStream;
 
     Stub(String ip, int port) throws IOException {
         this.socket = new Socket(ip, port);
         this.outputStream = this.socket.getOutputStream();
         this.inputStream = this.socket.getInputStream();
+
+        this.objectOutputStream = new ObjectOutputStream(this.outputStream);
     }
 
-    public void sendComputation(String str) throws IOException {
-        outputStream.write(str.getBytes());
+    public void sendComputation(Message msg) throws IOException {
+        objectOutputStream.writeObject(msg);
     }
 
     public int receiveResult() throws IOException {
@@ -32,19 +36,22 @@ public class Stub implements CalculatriceItf{
 
     @Override
     public int addition(int a, int b) throws IOException {
-        this.sendComputation("ADD:"+a+"-"+b);
+        Message msg = new Message("ADD", a, b);
+        this.sendComputation(msg);
         return this.receiveResult();
     }
 
     @Override
     public int subtraction(int a, int b) throws IOException {
-        this.sendComputation("SUB:"+a+"-"+b);
+        Message msg = new Message("SUB", a, b);
+        this.sendComputation(msg);
         return this.receiveResult();
     }
 
     @Override
     public int multiplication(int a, int b) throws IOException {
-        this.sendComputation("MUL:"+a+"-"+b);
+        Message msg = new Message("MUL", a, b);
+        this.sendComputation(msg);
         return this.receiveResult();
     }
 }

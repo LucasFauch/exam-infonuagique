@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,6 +9,7 @@ public class Skeleton {
     ServerSocket serverSocket;
     OutputStream outputStream;
     InputStream inputStream;
+    ObjectInputStream objectInputStream;
     Calculatrice calc;
 
     Skeleton(int port) throws IOException {
@@ -19,32 +21,23 @@ public class Skeleton {
         outputStream.write(Integer.toString(result).getBytes());
     }
 
-    public void receiveLoop() throws IOException {
+    public void receiveLoop() throws IOException, ClassNotFoundException {
         while(true) {
             Socket clientSocket = serverSocket.accept();
             this.outputStream = clientSocket.getOutputStream();
             this.inputStream = clientSocket.getInputStream();
+            this.objectInputStream = new ObjectInputStream(this.inputStream);
 
-            byte[] message = new byte[1024];
-            int length = inputStream.read(message);
-            String str = new String(message, 0, length);
+            Message msg = (Message) this.objectInputStream.readObject();
 
-            String operation = str.substring(0, 3);
-            String[] operands = str.substring(4).split("-");
-
-            int a = Integer.parseInt(operands[0]);
-            int b = Integer.parseInt(operands[1]);
-
-            switch (operation) {
-                case "ADD" -> this.sendResult(calc.addition(a, b));
-                case "SUB" -> this.sendResult(calc.subtraction(a, b));
-                case "MUL" -> this.sendResult(calc.multiplication(a, b));
+            switch (msg.method) {
+                case "ADD" -> this.sendResult(calc.addition(msg.a, msg.b));
+                case "SUB" -> this.sendResult(calc.subtraction(msg.a, msg.b));
+                case "MUL" -> this.sendResult(calc.multiplication(msg.a, msg.b));
                 default -> {
                     System.out.println("ERROR");
                 }
             }
-
-            //clientSocket.close();
         }
     }
 }
